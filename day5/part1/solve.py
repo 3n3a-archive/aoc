@@ -2,7 +2,7 @@
 
 import re
 
-INPUT_FILENAME = "input.example.txt"
+INPUT_FILENAME = "input.txt"
 
 def get_inputs():
   out = []
@@ -12,38 +12,73 @@ def get_inputs():
   return out
 
 def parse_inputs(inputs):
-  parsed_instructions = []
-
   parts = inputs.split("\n\n")
-  containers = parts[0]
-  # todo
 
-  instructions = parts[1]
+  # parse containers into temp object
+  parsed_containers_tmp = {}
+  containers = parts[0].split("\n")
+  for line in containers:
+    cleaned = line.replace("\n", "")
+    regex = r"\[(.)\]"
+    matches = list(re.finditer(regex, cleaned, re.MULTILINE))
+    for match in matches:
+      pos = match.end() - 2
+      name = match.group(0).replace("[", "").replace("]", "")
+
+      if pos in parsed_containers_tmp.keys():
+        parsed_containers_tmp[pos].append(name)
+      else:
+        parsed_containers_tmp[pos] = [name]
+
+  # move temp containers into object with correct keys
+  parsed_containers = {}
+  for i, current_key in enumerate(sorted(parsed_containers_tmp.keys()), start=1):
+    parsed_containers[i] = list(reversed(parsed_containers_tmp[current_key]))
+
+  # parse instructions into list
+  parsed_instructions = []
+  instructions = parts[1].split("\n")
   for instruction in instructions:
     cleaned = instruction.replace("\n", "")
     regex = r"move.(.*).from.(.*).to.(.*)"
     matches = re.search(regex, cleaned, re.MULTILINE)
     g = list(matches.groups())
     parsed_instructions.append({
-      "amount": g[0],
-      "from": g[1],
-      "to": g[2]
+      "amount": int(g[0]),
+      "from": int(g[1]),
+      "to": int(g[2])
     })
-  return (, parsed_instructions)
+  return (parsed_containers, parsed_instructions)
 
-def compare_arrays(inputs):
-  out = 0
-  for (elf_one, elf_two) in inputs:
-    if elf_one.issubset(elf_two) or elf_two.issubset(elf_one):
-      out += 1
+def execute_instructions(containers, instructions):
+  for instruction in instructions:
+    amount = instruction["amount"]
+    from_ = instruction["from"]
+    to_ = instruction["to"]
+
+    elements_from_len = len(containers[from_])
+
+    for i in range(elements_from_len, elements_from_len - amount, -1):
+      e = containers[from_].pop(i-1)
+      containers[to_].append(e)
+
+  return containers
+
+def get_top_containers(containers):
+  out = ""
+  for container_key in sorted(containers.keys()):
+    container = containers[container_key][-1:][0]
+    out += container
 
   return out
+      
 
 def main():
   input_lines = get_inputs()
-  inputs = parse_inputs(input_lines)
-  #sum = compare_arrays(inputs)
-  print(inputs)
+  containers, instructions = parse_inputs(input_lines)
+  final_containers = execute_instructions(containers, instructions)
+  top_containers = get_top_containers(final_containers)
+  print(top_containers)
 
 main()
 
