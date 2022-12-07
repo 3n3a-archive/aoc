@@ -3,7 +3,7 @@
 import re
 import copy
 
-INPUT_FILENAME = "input.example.txt"
+INPUT_FILENAME = "input.txt"
 
 def get_inputs():
   out = []
@@ -71,29 +71,56 @@ def walk_dirs(inputs):
                     }        
     return tree
 
-def calculate_folder_size(tree):
+def get_folder_size(tree):
     size = 0
     for key in tree.keys():
         element = tree[key]
-        if element["type"] == "dir":
-            size += calculate_folder_size(element["children"])
-        else:
+        if element["type"] == "file":
             size += element["size"]
+        else:
+            size += get_folder_size(element["children"])
     return size
 
+def calculate_folder_size(tree):
+    for key in tree.keys():
+        element = tree[key]
+        if element["type"] == "dir":
+            element["size"] += get_folder_size(element["children"])
+            element["children"] = calculate_folder_size(element["children"])
+    return tree
+
+def get_dirs_with_size(tree, size_limit=100000):
+    is_under_limit = []
+    for key in tree.keys():
+        element = tree[key]
+        if element["type"] == "dir" and element["size"] <= size_limit:
+            is_under_limit.append([key, element["size"]])
+        for elem in get_dirs_with_size(element["children"]):
+            is_under_limit.append(elem)
+    return is_under_limit
+
+def sum_limit_dirs(arr):
+    size = 0
+    for dir_ in arr:
+        size += dir_[1]
+    
+    return size
 
 def main():
   inputs = get_inputs()
   inputs = preprocess(inputs)
   inputs = walk_dirs(inputs)
+  inputs = calculate_folder_size(inputs)
   print(inputs)
   print("=====================")
   print("CALCULATION BEGINS")
   print("=====================")
 
-  size = calculate_folder_size(inputs)
+  dirs = get_dirs_with_size(inputs)
+  size = sum_limit_dirs(dirs)
+  print(dirs)
   print(size)
-  print("Test if example correct", size == 48381165)
+  print("Test if example correct", size == 95437)
 
 main()
 
