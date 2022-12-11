@@ -42,7 +42,7 @@ def execute_instructions(inputs):
     TAIL = [(0,0) for _ in range(9)]
     ROW_DIFF_MAP = {'L': 0, 'U': -1, 'R': 0, 'D': 1}
     COLUMN_DIFF_MAP = {'L': -1, 'U': 0, 'R': 1, 'D': 0}
-    P1 = set([TAIL[0]])
+    P2 = set([TAIL[8]])
     for instruction in inputs:
         direction,amount = instruction
         amount = int(amount)
@@ -51,15 +51,13 @@ def execute_instructions(inputs):
             TAIL[0] = adjust(HEAD, TAIL[0])
             for i in range(1, 9):
                 TAIL[i] = adjust(TAIL[i-1], TAIL[i])
-            P1.add(TAIL[0])
-    return P1
+            P2.add(TAIL[8])
 
 def main():
     inputs = get_inputs()
     result = execute_instructions(inputs)
     print(len(result))
-    print(len(result) == 5735)
-
+    print(len(result) == 2478)
 
 main()
 
